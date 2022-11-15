@@ -1,9 +1,10 @@
 import { useForm } from "react-hook-form";
 import { usePost } from "./hooks/posts";
 import { IPost, IShow } from "./@types";
-import { ChangeEvent, useEffect, useState } from "react";
+import { ChangeEvent, FocusEvent, useEffect, useState } from "react";
 
 function App() {
+  const [post, setPost] = useState<IPost | null>(null);
   const { useMutationInsert, useQueryPosts, useMutationUpdate, client } = usePost();
   const { data, isLoading } = useQueryPosts();
   const { mutateAsync: mutagePostAsync } = useMutationInsert();
@@ -31,9 +32,11 @@ function App() {
       return item;
     });
     client.setQueryData("posts", [...posts]);
-    //mutatePutAsync(post);
   };
-
+  const onHandleBlur = (e: FocusEvent<HTMLInputElement>, post: IPost) => {
+    mutatePutAsync(post);
+    setPost(null);
+  };
   return (
     <div className="container">
       <div className="mt-1 mb-3">
@@ -69,8 +72,10 @@ function App() {
             <div className="col-md-4" key={item.id}>
               <div className="shadow-sm p-3 mb-3 bg-body rounded">
                 <div className="text-primary mb-2">
-                  <span>{item.description}</span>
-                  <input type="text" value={item.description} onChange={(e) => onHandleChange(e, item.id)} className="form-control form-control-sm" />
+                  {post?.id !== item.id && <span onClick={(e) => setPost(item)}>{item.description}</span>}
+                  {post && post.id === item.id && (
+                    <input type="text" value={item.description} onChange={(e) => onHandleChange(e, item.id)} onBlur={(e) => onHandleBlur(e, item)} className="form-control form-control-sm" />
+                  )}
                 </div>
                 <small className="fst-italic">{item.id}</small>
               </div>
