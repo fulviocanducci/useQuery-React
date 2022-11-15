@@ -1,11 +1,13 @@
 import { useForm } from "react-hook-form";
 import { usePost } from "./hooks/posts";
-import { IPost } from "./@types";
+import { IPost, IShow } from "./@types";
+import { ChangeEvent, useEffect, useState } from "react";
 
 function App() {
-  const { useMutationPostInsert, useResultQueryPost } = usePost();
-  const { data, isLoading } = useResultQueryPost();
-  const { mutateAsync } = useMutationPostInsert();
+  const { useMutationInsert, useQueryPosts, useMutationUpdate, client } = usePost();
+  const { data, isLoading } = useQueryPosts();
+  const { mutateAsync: mutagePostAsync } = useMutationInsert();
+  const { mutateAsync: mutatePutAsync } = useMutationUpdate();
   const {
     register,
     handleSubmit,
@@ -16,8 +18,20 @@ function App() {
   });
 
   const onSubmit = async (data: IPost) => {
-    await mutateAsync(data);
+    await mutagePostAsync(data);
     reset();
+  };
+  const onHandleChange = (e: ChangeEvent<HTMLInputElement>, id: string) => {
+    let posts = client.getQueryData<IPost[]>("posts") || [];
+    let post = { id, description: e.target.value };
+    posts = posts.map((item: IPost) => {
+      if (item.id === id) {
+        return post;
+      }
+      return item;
+    });
+    client.setQueryData("posts", [...posts]);
+    //mutatePutAsync(post);
   };
 
   return (
@@ -50,14 +64,19 @@ function App() {
             <small className="fst-italic"> Quantidade: {data?.length || 0}</small>
           </div>
         )}
-        {data?.map((item) => (
-          <div className="col-md-4" key={item.id}>
-            <div className="shadow-sm p-3 mb-3 bg-body rounded">
-              <div className="text-primary border-bottom mb-2">{item.description}</div>
-              <small className="fst-italic">{item.id}</small>
+        {data?.map((item) => {
+          return (
+            <div className="col-md-4" key={item.id}>
+              <div className="shadow-sm p-3 mb-3 bg-body rounded">
+                <div className="text-primary mb-2">
+                  <span>{item.description}</span>
+                  <input type="text" value={item.description} onChange={(e) => onHandleChange(e, item.id)} className="form-control form-control-sm" />
+                </div>
+                <small className="fst-italic">{item.id}</small>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

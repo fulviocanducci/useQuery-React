@@ -4,4 +4,8 @@ const Axios = axios.create({
   baseURL: "https://192.168.2.107/api",
 });
 
-export const request = Axios;
+const request = {
+  api: Axios,
+};
+
+export default request;
